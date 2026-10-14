@@ -1,18 +1,19 @@
 {
-  "name": "kinship-circle",
+  "name": "outside",
   "private": true,
   "type": "module",
-  "workspaces": ["client", "server"],
+  "workspaces": ["client"],
   "scripts": {
-    "dev": "concurrently -n api,web -c cyan,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
-    "dev:demo": "npm run dev:demo -w server",
+    "dev": "concurrently -n api,web -c cyan,magenta \".venv/bin/python -m uvicorn backend.main:app --reload --port 4000\" \"npm run dev -w client\"",
+    "dev:demo": "node scripts/dev-demo.mjs",
     "build": "npm run build -w client",
-    "test": "npm run test -w server",
-    "test:integration": "npm run test:integration -w server",
-    "seed": "npm run seed -w server",
-    "start": "npm run start -w server"
+    "test": ".venv/bin/python -m pytest backend/tests -q",
+    "test:integration": "node scripts/integration.mjs",
+    "seed": ".venv/bin/python -m backend.seed",
+    "start": ".venv/bin/python -m uvicorn backend.main:app --host 0.0.0.0 --port 4000"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "mongodb-memory-server": "10.1.4"
   }
 }

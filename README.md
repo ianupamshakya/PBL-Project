@@ -1,38 +1,55 @@
-# Kinship
+# outside
 
-A quieter social connection app based on the **Social Network Recommendation Engine** report by team PsquareG. The report's graph model is preserved: accepted connections form two-way edges, and discovery ranks friends of friends by mutual-connection count. Shared hashtags add another relevance signal for people who do not have a network yet.
+outside turns the **Social Network Recommendation Engine** report into a web application. The backend and recommendation engine are written in **Python**, matching the report's graph approach: users are nodes, accepted connections are two-way edges, and friends of friends are ranked by mutual-connection count. Shared hashtags add another signal when a member has few connections.
 
-## How it works
+## What members can do
 
-1. Register with a private email and password, then choose 3–8 hashtags.
-2. Discover other members through hashtags only. Names, aliases, email addresses, and messages are absent from discovery responses.
-3. Send interest. The recipient sees the sender's hashtags only and can accept or decline.
-4. Accepted connections reveal each person's random alias and unlock private chat. Email is never shared.
-5. A member can block another member or submit a private report from a conversation.
+1. Register with a private email and choose 3–8 hashtags.
+2. Discover members through hashtags only. Discovery never includes names, aliases, email, or messages.
+3. Send interest. The recipient can accept or decline after seeing only the sender's hashtags.
+4. Chat after acceptance. Generated aliases appear only once both members connect; email stays private.
+5. Block a member or submit a private report from a conversation.
 
 ## Stack
 
-- Frontend: Vite, React, Tailwind CSS, Lucide icons
-- API: Node.js, Express, Mongoose
-- Database: MongoDB
-- Sessions: signed JWT in an HTTP-only cookie; passwords hashed with bcrypt
+- **Python:** FastAPI, PyMongo, bcrypt, PyJWT, and a dictionary/set graph recommendation module
+- **Frontend:** Vite, React, Tailwind CSS, and Lucide icons
+- **Database:** MongoDB
+- **Development tooling:** Node.js starts Vite and, for the optional demo, a temporary MongoDB instance. It does not run the API.
 
-## Run locally
+## Setup
 
-Requires Node.js 20+ and MongoDB 7+. Docker Compose can start MongoDB with `docker compose up -d mongo`; alternatively use a local MongoDB server or MongoDB Atlas URI.
+Requires Python 3.13+, Node.js 20+, and MongoDB 7+ for persistent data. From the project root:
 
-**Quick demo without installing MongoDB:** run `npm install` and then `npm run dev:demo`. This starts a temporary MongoDB, loads five demo accounts, and launches both servers. Demo data is erased when you stop the command. The MongoDB test binary is downloaded on first use.
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
+npm install
+```
+
+### Quick demo
+
+```sh
+npm run dev:demo
+```
+
+This starts the Python API, Vite, and a **temporary MongoDB**. Open **http://localhost:5173**. Demo accounts are `demo1@example.test` through `demo5@example.test`, password `DemoPass123!`. Demo data is erased when the command stops. The MongoDB test binary may download on first use.
+
+### Persistent MongoDB
+
+Start MongoDB with `docker compose up -d mongo`, use a local installation, or set a MongoDB Atlas URI. Then:
 
 ```sh
 cp .env.example .env
-# Set JWT_SECRET to a unique random string of at least 32 characters.
-npm install
+# Edit MONGODB_URI and replace JWT_SECRET with a long random value.
 npm run dev
 ```
 
-The frontend is at **http://localhost:5173** and the API at **http://localhost:4000**. Vite proxies `/api` to Express. If using Atlas, set `MONGODB_URI` in `.env`. For a single-host deployment, run `npm run build` and `npm start`; Express serves the built frontend alongside the API. Set `CLIENT_ORIGIN` to the public HTTPS origin and `NODE_ENV=production` so the session cookie is secure.
+Vite runs at **http://localhost:5173** and proxies `/api` to the Python server at **http://localhost:4000**. To load disposable sample accounts into a development database, run `npm run seed`.
 
-For an optional local demonstration, run `npm run seed`. It creates five clearly disposable demo accounts in your configured development database (`demo1@example.test` through `demo5@example.test`, password `DemoPass123!`) with a few accepted connections. The seed is repeatable and refuses to run when `NODE_ENV=production`.
+For a single-host deployment, run `npm run build`, set `APP_ENV=production`, `CLIENT_ORIGIN` to the public HTTPS origin, and `MONGODB_URI` and `JWT_SECRET` to production values, then run `npm start`. The Python server serves the built frontend and API. Use HTTPS so session cookies remain secure.
+
+## Verification
 
 ```sh
 npm test
@@ -40,16 +57,18 @@ npm run test:integration
 npm run build
 ```
 
-## Privacy and safety
+Python tests cover the graph algorithm and API permissions. The integration test starts a temporary real MongoDB and tests the Python API from registration through discovery, interest, acceptance, messaging, and blocking.
 
-Discovery and pending requests serialize only user IDs and hashtags. The server checks that a connection is accepted before returning or storing messages, and checks blocks on both sides. Authentication routes are rate limited. Reports are stored in MongoDB for an operator to review. This is a student project and does not provide real-time crisis support or automated moderation.
+## Data and privacy
 
-## Project structure
+MongoDB collections are `users`, `connections`, `messages`, and `reports`. The Python API preserves the previous collection names and fields, so existing MongoDB records remain compatible. Passwords are bcrypt-hashed. Sessions use signed JWTs in HTTP-only cookies. The server checks both sides of a block before showing a connection or message. Reports are stored for operator review; this student project does not include automated moderation or crisis support.
 
-- `client/` Vite app
-- `server/src/models.js` MongoDB data model
-- `server/src/logic.js` hashtag normalization and graph recommendation
-- `server/src/index.js` API and authorization rules
-- `server/test/` recommendation tests
+The default database is now `outside`. If you already have data in another database, keep its existing `MONGODB_URI` or migrate those collections before using the new default. Existing browser sessions must sign in again because the session cookie was renamed.
 
-The integration test starts a temporary MongoDB instance and may download its test binary the first time it runs.
+## Key files
+
+- `backend/recommendations.py` — Python dictionary/set social graph and ranking
+- `backend/app.py` — FastAPI routes and privacy rules
+- `backend/seed.py` — optional demo data
+- `backend/tests/` — Python unit and API tests
+- `client/` — Vite/React/Tailwind interface
