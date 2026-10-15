@@ -1,74 +1,144 @@
 # outside
 
-outside turns the **Social Network Recommendation Engine** report into a web application. The backend and recommendation engine are written in **Python**, matching the report's graph approach: users are nodes, accepted connections are two-way edges, and friends of friends are ranked by mutual-connection count. Shared hashtags add another signal when a member has few connections.
+**outside** is a BCA project based learning application for people who prefer a gentle way to meet others online. A person chooses hashtags that describe their interests. Other members first see only those hashtags. One member can send an interest request; chat becomes available only after the other member accepts.
 
-## What members can do
+The project implements a social network recommendation engine in **Python**. It represents members as graph nodes and accepted connections as edges. It recommends people using mutual connections and shared hashtags.
 
-1. Register with a private email and choose 3–8 hashtags.
-2. Discover members through hashtags only. Discovery never includes names, aliases, email, or messages.
-3. Send interest. The recipient can accept or decline after seeing only the sender's hashtags.
-4. Chat after acceptance. Generated aliases appear only once both members connect; email stays private.
-5. Block a member or submit a private report from a conversation.
+## What the application does
 
-## Stack
+- Register and sign in with an email and password.
+- Choose 3 to 8 interest hashtags and update them later.
+- Discover people through hashtags without showing their name or email.
+- Send, accept, or decline interest requests.
+- Chat after a request is accepted. A generated alias appears at that stage; email remains private.
+- Block a member or submit a report.
 
-- **Python:** FastAPI, PyMongo, bcrypt, PyJWT, and a dictionary/set graph recommendation module
-- **Frontend:** Vite, React, Tailwind CSS, and Lucide icons
-- **Database:** MongoDB
-- **Development tooling:** Node.js starts Vite and, for the optional demo, a temporary MongoDB instance. It does not run the API.
+## Technology used
 
-## Setup
+| Part | Technology |
+| --- | --- |
+| Website and dashboard (GUI) | React, Vite, Tailwind CSS |
+| API and recommendation logic | Python, FastAPI |
+| Database | MongoDB |
+| Password and login security | bcrypt, signed session cookie |
 
-Requires Python 3.13+, Node.js 20+, and MongoDB 7+ for persistent data. From the project root:
+The website is the graphical user interface (GUI). The Python API handles the application rules and talks to MongoDB.
 
-```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements-dev.txt
-npm install
-```
+## Run it after cloning
 
-### Quick demo
+Install **Python 3.13 or newer**, **Node.js 20 or newer**, and **Git** first. Run the commands below from the project folder. The quick demo does **not** require Docker or a separate MongoDB installation. On its first run, it may download a MongoDB binary, so an internet connection is needed.
 
-```sh
+### Windows (Command Prompt)
+
+```bat
+git clone <your-repository-url>
+cd <repository-folder>
+py -3 -m venv .venv
+.venv\Scripts\activate.bat
+python -m pip install -r requirements-dev.txt
+npm ci
 npm run dev:demo
 ```
 
-This starts the Python API, Vite, and a **temporary MongoDB**. Open **http://localhost:5173**. Demo accounts are `demo1@example.test` through `demo5@example.test`, password `DemoPass123!`. Demo data is erased when the command stops. The MongoDB test binary may download on first use.
+Use **Command Prompt** for these commands. After activation, the prompt should show `(.venv)`. If `py` is not found, install Python and select its launcher during installation.
 
-### Persistent MongoDB
+### macOS or Linux
 
-Start MongoDB with `docker compose up -d mongo`, use a local installation, or set a MongoDB Atlas URI. Then:
+```sh
+git clone <your-repository-url>
+cd <repository-folder>
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+npm ci
+npm run dev:demo
+```
+
+Open **http://localhost:5173** when the terminal says the demo has started. Press **Ctrl+C** to stop it. The demo database is temporary, so its data disappears when you stop the app.
+
+For a quick demonstration, sign in with `demo1@example.test` and password `DemoPass123!`. Accounts `demo2@example.test` through `demo5@example.test` use the same password. You can also register a new account.
+
+## Save data between runs (optional)
+
+Install and start MongoDB locally, or use your own MongoDB connection URI. This option keeps accounts and messages after the app stops. Complete the setup above, then stop the demo with **Ctrl+C**.
+
+On **Windows Command Prompt**:
+
+```bat
+copy .env.example .env
+notepad .env
+```
+
+On **macOS or Linux**:
 
 ```sh
 cp .env.example .env
-# Edit MONGODB_URI and replace JWT_SECRET with a long random value.
+```
+
+Edit `.env`: set `MONGODB_URI` to your running MongoDB database and replace `JWT_SECRET` with a random value of at least 32 characters. On macOS or Linux, open `.env` in any text editor. The example URI uses a local MongoDB server and the `outside` database. To generate a secret, run `python -c "import secrets; print(secrets.token_urlsafe(48))"` and paste the result into `.env`. Do not upload `.env` to GitHub. The project already ignores it. Then start the app:
+
+```sh
 npm run dev
 ```
 
-Vite runs at **http://localhost:5173** and proxies `/api` to the Python server at **http://localhost:4000**. To load disposable sample accounts into a development database, run `npm run seed`.
+You can add the sample accounts to your saved database with `npm run seed`. Open **http://localhost:5173**. Start each new terminal session by activating `.venv` again before using `npm run dev`, `npm run seed`, or `npm test`.
 
-For a single-host deployment, run `npm run build`, set `APP_ENV=production`, `CLIENT_ORIGIN` to the public HTTPS origin, and `MONGODB_URI` and `JWT_SECRET` to production values, then run `npm start`. The Python server serves the built frontend and API. Use HTTPS so session cookies remain secure.
+## Useful commands
 
-## Verification
+| Command | Purpose |
+| --- | --- |
+| `npm run dev:demo` | Start the website, Python API, and temporary MongoDB |
+| `npm run dev` | Start the website and Python API using `.env` |
+| `npm run seed` | Add sample accounts to the configured database |
+| `npm test` | Run Python tests |
+| `npm run build` | Build the frontend |
 
-```sh
-npm test
-npm run test:integration
-npm run build
-```
+## Main project files
 
-Python tests cover the graph algorithm and API permissions. The integration test starts a temporary real MongoDB and tests the Python API from registration through discovery, interest, acceptance, messaging, and blocking.
+- `client/src/App.jsx` — website pages and dashboard.
+- `client/src/api.js` — browser requests to the Python API.
+- `backend/app.py` — registration, discovery, requests, chat, blocking, and reporting.
+- `backend/recommendations.py` — graph and hashtag recommendation logic.
+- `backend/seed.py` — optional sample accounts.
+- `backend/tests/` — Python tests.
+- `.env.example` — example database and application settings.
 
-## Data and privacy
+## Viva questions and answers
 
-MongoDB collections are `users`, `connections`, `messages`, and `reports`. The Python API preserves the previous collection names and fields, so existing MongoDB records remain compatible. Passwords are bcrypt-hashed. Sessions use signed JWTs in HTTP-only cookies. The server checks both sides of a block before showing a connection or message. Reports are stored for operator review; this student project does not include automated moderation or crisis support.
+**1. What is the aim of this project?**  To help people discover others through shared interests and connect at a pace they choose.
 
-The default database is now `outside`. If you already have data in another database, keep its existing `MONGODB_URI` or migrate those collections before using the new default. Existing browser sessions must sign in again because the session cookie was renamed.
+**2. Is the website a GUI?**  Yes. The React website is the graphical user interface. The dashboard, buttons, forms, and chat let users interact with the Python backend.
 
-## Key files
+**3. What is the role of Python?**  Python runs the FastAPI server, applies privacy and connection rules, and calculates recommendations.
 
-- `backend/recommendations.py` — Python dictionary/set social graph and ranking
-- `backend/app.py` — FastAPI routes and privacy rules
-- `backend/seed.py` — optional demo data
-- `backend/tests/` — Python unit and API tests
-- `client/` — Vite/React/Tailwind interface
+**4. Why did you use React and Vite?**  React builds the interactive pages. Vite runs the frontend during development and creates the production build.
+
+**5. Why did you use MongoDB?**  MongoDB stores users, connection requests, messages, and reports as documents. Python accesses them through PyMongo.
+
+**6. What is a graph in this project?**  Each user is a node. Each accepted connection is an undirected edge between two users.
+
+**7. How are people recommended?**  The algorithm counts mutual connections and shared hashtags. Its score is `3 × mutual connections + shared hashtags`, so mutual connections have more weight.
+
+**8. What happens when a new user has no connections?**  Shared hashtags can still produce useful recommendations. This helps with the cold start problem.
+
+**9. Why use hashtags?**  They let members express interests while keeping personal details hidden during discovery.
+
+**10. When can two users chat?**  Only after one sends an interest request and the other accepts it. The API checks the accepted connection before allowing messages.
+
+**11. What information is private?**  Email is used for account access and is not shown to other members. Discovery shows hashtags; a generated alias appears after connection.
+
+**12. How are passwords protected?**  The application stores a bcrypt hash of each password instead of the original password.
+
+**13. How does login stay active?**  The server puts a signed session token in an HTTP-only cookie. Protected API routes check that token.
+
+**14. How are duplicate interest requests prevented?**  A sorted key made from the two user IDs identifies each pair, and MongoDB has a unique index on that key.
+
+**15. What happens when someone blocks another member?**  The API hides their connection from the blocked member and prevents further conversation access.
+
+**16. Can users report someone?**  Yes. Reports are stored for review. This student project does not include an automated moderation system.
+
+**17. How did you test the project?**  Python tests cover the recommendation logic and API permissions. The frontend can be checked with `npm run build`.
+
+**18. What are the project's limits?**  It is a project demonstration, not a mental health treatment service. A production service would need moderation operations, deployment monitoring, and stronger abuse controls.
+
+**19. What could be added later?**  Possible improvements include notifications, account recovery, accessibility testing, and an admin review panel for reports.

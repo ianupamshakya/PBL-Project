@@ -4,13 +4,12 @@
   "type": "module",
   "workspaces": ["client"],
   "scripts": {
-    "dev": "concurrently -n api,web -c cyan,magenta \".venv/bin/python -m uvicorn backend.main:app --reload --port 4000\" \"npm run dev -w client\"",
+    "dev": "concurrently -n api,web -c cyan,magenta \"python -m uvicorn backend.main:app --reload --port 4000\" \"npm run dev -w client\"",
     "dev:demo": "node scripts/dev-demo.mjs",
     "build": "npm run build -w client",
-    "test": ".venv/bin/python -m pytest backend/tests -q",
-    "test:integration": "node scripts/integration.mjs",
-    "seed": ".venv/bin/python -m backend.seed",
-    "start": ".venv/bin/python -m uvicorn backend.main:app --host 0.0.0.0 --port 4000"
+    "test": "python -m pytest backend/tests -q",
+    "seed": "python -m backend.seed",
+    "start": "python -m uvicorn backend.main:app --host 0.0.0.0 --port 4000"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
